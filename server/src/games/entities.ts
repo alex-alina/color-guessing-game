@@ -1,14 +1,15 @@
 import { BaseEntity, PrimaryGeneratedColumn, Column, Entity, Index, OneToMany, ManyToOne } from 'typeorm'
 import User from '../users/entity'
 
-export type Symbol = 'x' | 'o'
-export type Row = [ Symbol | null, Symbol | null, Symbol | null ]
-export type Board = [ Row, Row, Row ]
+export type Color = '#4286f4' | '#fcf953' | '#ce792f'
+export type Guess = [ Color | null, Color | null, Color | null ]
+export type Palette = Array<Color>
 
 type Status = 'pending' | 'started' | 'finished'
 
-const emptyRow: Row = [null, null, null]
-const emptyBoard: Board = [ emptyRow, emptyRow, emptyRow ]
+export const palette: Array<Color> = ['#4286f4', '#fcf953', '#ce792f']
+const emptyPickCodeRow: Guess = [null, null, null]
+
 
 @Entity()
 export class Game extends BaseEntity {
@@ -16,14 +17,19 @@ export class Game extends BaseEntity {
   @PrimaryGeneratedColumn()
   id?: number
 
-  @Column('json', {default: emptyBoard})
-  board: Board
+  @Column('json')
+  secretCode: Array<Color>
 
-  @Column('char', {length:1, default: 'x'})
-  turn: Symbol
+  //turn
+  @Column('boolean', {default: true})
+  playerOneTurn: Boolean
 
-  @Column('char', {length:1, nullable: true})
-  winner: Symbol
+  @Column('json', {default: palette})
+  palette: Array<Color>
+
+  
+  // @Column('char', {length:1, nullable: true})
+  // winner: Symbol
 
   @Column('text', {default: 'pending'})
   status: Status
@@ -35,11 +41,14 @@ export class Game extends BaseEntity {
 }
 
 @Entity()
-@Index(['game', 'user', 'symbol'], {unique:true})
+@Index(['game', 'user'], {unique:true})
 export class Player extends BaseEntity {
 
   @PrimaryGeneratedColumn()
   id?: number
+
+  @Column('json', {default: emptyPickCodeRow})
+  playerGuess: Guess
 
   @ManyToOne(_ => User, user => user.players)
   user: User
@@ -47,9 +56,6 @@ export class Player extends BaseEntity {
   @ManyToOne(_ => Game, game => game.players)
   game: Game
 
-  @Column()
-  userId: number
-
-  @Column('char', {length: 1})
-  symbol: Symbol
+  // @Column()
+  // userId: number
 }
