@@ -5,8 +5,12 @@ import {getGames, joinGame, updateGame} from '../../actions/games'
 import {getUsers} from '../../actions/users'
 import {userId} from '../../jwt'
 import Paper from 'material-ui/Paper'
-import Board from './Board'
+// import Board from './Board'
+import SecretCode from './SecretCode'
 import './GameDetails.css'
+import Palette from './Palette';
+import {updateColor} from '../../actions/updateColor'
+import GuessInput from './GuessInput';
 
 class GameDetails extends PureComponent {
 
@@ -19,18 +23,9 @@ class GameDetails extends PureComponent {
 
   joinGame = () => this.props.joinGame(this.props.game.id)
 
-  makeMove = (toRow, toCell) => {
-    const {game, updateGame} = this.props
-
-    const board = game.board.map(
-      (row, rowIndex) => row.map((cell, cellIndex) => {
-        if (rowIndex === toRow && cellIndex === toCell) return game.turn
-        else return cell
-      })
-    )
-    updateGame(game.id, board)
+  paletteHandler = (event) => {
+    this.props.updateColor(event.target.value)
   }
-
 
 
   render() {
@@ -45,9 +40,9 @@ class GameDetails extends PureComponent {
 
     const player = game.players.find(p => p.userId === userId)
 
-    const winner = game.players
-      .filter(p => p.symbol === game.winner)
-      .map(p => p.userId)[0]
+    // const winner = game.players
+    //   .filter(p => p.symbol === game.winner)
+    //   .map(p => p.userId)[0]
 
     return (<Paper className="outer-paper">
       <h1>Game #{game.id}</h1>
@@ -56,7 +51,7 @@ class GameDetails extends PureComponent {
 
       {
         game.status === 'started' &&
-        player && player.symbol === game.turn &&
+        player  === game.playerOneTurn &&
         <div>It's your turn!</div>
       }
 
@@ -64,18 +59,24 @@ class GameDetails extends PureComponent {
         game.status === 'pending' &&
         game.players.map(p => p.userId).indexOf(userId) === -1 &&
         <button onClick={this.joinGame}>Join Game</button>
+        
       }
+        <SecretCode />
+        <hr />
+        <GuessInput palette={game.palette}/>
+        <hr />
+        <Palette onclick={this.paletteHandler} palette={game.palette}/>
 
-      {
+      {/* {
         winner &&
         <p>Winner: {users[winner].firstName}</p>
-      }
+      } */}
 
       <hr />
 
       {
-        game.status !== 'pending' &&
-        <Board board={game.board} makeMove={this.makeMove} />
+        game.status !== 'pending' //you have to complete this with smth
+        
       }
     </Paper>)
   }
@@ -89,7 +90,7 @@ const mapStateToProps = (state, props) => ({
 })
 
 const mapDispatchToProps = {
-  getGames, getUsers, joinGame, updateGame
+  getGames, getUsers, joinGame, updateGame, updateColor
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(GameDetails)

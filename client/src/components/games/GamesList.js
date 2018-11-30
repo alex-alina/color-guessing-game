@@ -42,7 +42,7 @@ class GamesList extends PureComponent {
           size="small"
           onClick={() => history.push(`/games/${game.id}`)}
         >
-          Watch
+          Watch Game
         </Button>
       </CardActions>
     </Card>)
