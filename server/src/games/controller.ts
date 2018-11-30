@@ -4,7 +4,7 @@ import {
 } from 'routing-controllers'
 import User from '../users/entity'
 import { Game, Player, Color } from './entities'
-import { /*IsSecretCode,*/ isValidTransition,/* calculateWinner, finished, setSecretCode*/ } from './logic'
+import { /*IsSecretCode,*/ isValidTransition,/* calculateWinner, finished,*/ } from './logic'
 // import { Validate } from 'class-validator'
 import { io } from '../index'
 /*
@@ -24,6 +24,15 @@ const randomColor = (): Color => {
   return newColor
 }
 
+const getGameWithoutSecretCode = async (gameId) => {
+  const game = await Game.findOneById(gameId)
+    if (!game) {
+      throw new Error
+    }
+
+    const { secretCode, ...gameWithoutSecretCode } = game
+    return gameWithoutSecretCode
+}
 
 @JsonController()
 export default class GameController {
@@ -34,8 +43,6 @@ export default class GameController {
   async createGame(
     @CurrentUser() user: User
   ) {
-
-    console.log(user)
     const entity = await Game.create({
       secretCode: [randomColor(), randomColor(), randomColor()],
     }).save()
@@ -44,14 +51,15 @@ export default class GameController {
       game: entity,
       user,
     }).save()
-    console.log(Player)
 
-    const game = await Game.findOneById(entity.id)
-    if (!game) {
-      throw new Error
-    }
+    // const game = await Game.findOneById(entity.id)
+    // if (!game) {
+    //   throw new Error
+    // }
 
-    const { secretCode, ...gameWithoutSecretCode } = game
+    // const { secretCode, ...gameWithoutSecretCode } = game
+    const gameWithoutSecretCode = await getGameWithoutSecretCode(entity.id)
+
     io.emit('action', {
       type: 'ADD_GAME',
       payload: gameWithoutSecretCode
@@ -81,7 +89,8 @@ export default class GameController {
 
     io.emit('action', {
       type: 'UPDATE_GAME',
-      payload: await Game.findOneById(game.id)
+      payload: await getGameWithoutSecretCode(game.id)
+
     })
 
     return player
@@ -133,12 +142,14 @@ export default class GameController {
         game.board = update.board
         await game.save()
         */
+    const gameWithoutSecretCode = await getGameWithoutSecretCode(game.id)
+
     io.emit('action', {
       type: 'UPDATE_GAME',
-      payload: game
+      payload: gameWithoutSecretCode
     })
 
-    return game
+    return gameWithoutSecretCode
   }
 
 
