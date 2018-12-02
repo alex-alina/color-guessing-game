@@ -1,20 +1,19 @@
 import {
   JsonController, Authorized, CurrentUser, Post, Param, BadRequestError, HttpCode, NotFoundError, ForbiddenError, Get,
- /* Body,*/ Patch
+ Body, Patch
 } from 'routing-controllers'
 import User from '../users/entity'
-import { Game, Player, Color } from './entities'
-import { /*IsSecretCode,*/ isValidTransition,/* calculateWinner, finished,*/ } from './logic'
-// import { Validate } from 'class-validator'
+import { Game, Player, Color, Guess } from './entities'
+import { IsSecretCode, /*isValidTransition, calculateWinner, finished,*/ } from './logic'
+import { Validate } from 'class-validator'
 import { io } from '../index'
-/*
+
 class GameUpdate {
   @Validate(IsSecretCode, {
     message: 'Not a valid secret code'
   })
-  secretCode: Array<Color>
+  playerGuess: Guess;
 }
-*/
 
 const randomColor = (): Color => {
   const colors: Array<Color> = ['#4286f4', '#fcf953', '#ce792f']
@@ -86,6 +85,7 @@ export default class GameController {
       game,
       user,
     }).save()
+    console.log(player)
 
     io.emit('action', {
       type: 'UPDATE_GAME',
@@ -102,7 +102,7 @@ export default class GameController {
   // the reason that we're using patch here is because this request is not idempotent
   // http://restcookbook.com/HTTP%20Methods/idempotency/
   // try to fire the same requests twice, see what happens
-  @Patch('/games/:id([0-9]+)')
+  @Patch('/games/:gameId([0-9]+)/guesses')
   //Patch trimite o mutare 
   //tb sa verifici:
   //care dinte cei doi jucatori e
@@ -113,8 +113,8 @@ export default class GameController {
   //compara codurile si trimite rezultatul
   async updateGame(
     @CurrentUser() user: User,
-    @Param('id') gameId: number,
-    // @Body() update: GameUpdate
+    @Param('gameId') gameId: number,
+    @Body() update: GameUpdate
   ) {
     const game = await Game.findOneById(gameId)
     if (!game) throw new NotFoundError(`Game does not exist`)
@@ -123,10 +123,13 @@ export default class GameController {
 
     if (!player) throw new ForbiddenError(`You are not part of this game`)
     if (game.status !== 'started') throw new BadRequestError(`The game is not started yet`)
-    if (game.playerOneTurn !== false) throw new BadRequestError(`It's not your turn`)
-    if (!isValidTransition(player.playerGuess)) {
-      throw new BadRequestError(`Invalid move`)
-    }
+    // if (game.playerOneTurn !== false) throw new BadRequestError(`It's not your turn`)
+
+    player.playerGuess = update.playerGuess
+    await player.save()
+    // if (!isValidTransition(update.playerGuess)) {
+    //   throw new BadRequestError(`Invalid move`)
+    // }
     /*
         const winner = calculateWinner(update.board)
         if (winner) {

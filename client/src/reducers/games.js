@@ -1,4 +1,4 @@
-import {ADD_GAME, UPDATE_GAME, UPDATE_GAMES} from '../actions/games'
+import {ADD_GAME, UPDATE_GAME, UPDATE_GAMES, UPDATE_GUESS_CODE} from '../actions/games'
 import {USER_LOGOUT} from '../actions/users'
 
 /*
@@ -21,7 +21,13 @@ export default (state = null, {type, payload}) => {
         ...state,
         [payload.id]: payload
       }
+      
+    case UPDATE_GUESS_CODE:
+      return {
+        payload
+      }
 
+    
     case UPDATE_GAMES:
       return payload.reduce((games, game) => {
         games[game.id] = game

@@ -8,6 +8,7 @@ export const UPDATE_GAME = 'UPDATE_GAME'
 export const UPDATE_GAMES = 'UPDATE_GAMES'
 export const JOIN_GAME_SUCCESS = 'JOIN_GAME_SUCCESS'
 export const UPDATE_GAME_SUCCESS = 'UPDATE_GAME_SUCCESS'
+export const UPDATE_GUESS_CODE = 'UPDATE_GUESS_CODE'
 
 const updateGames = games => ({
   type: UPDATE_GAMES,
@@ -19,14 +20,14 @@ const addGame = game => ({
   payload: game
 })
 
-const updateGameSuccess = () => ({
-  type: UPDATE_GAME_SUCCESS
-})
+const updateGame = (gameUpdate) => ({
+  type: UPDATE_GAME,
+  payload: gameUpdate
+ })
 
 const joinGameSuccess = () => ({
   type: JOIN_GAME_SUCCESS
 })
-
 
 export const getGames = () => (dispatch, getState) => {
   const state = getState()
@@ -68,16 +69,19 @@ export const createGame = () => (dispatch, getState) => {
     .catch(err => console.error(err))
 }
 
-export const updateGame = (gameId, board) => (dispatch, getState) => {
+export const updatePlayerGuess = (gameId, guessedCode) => (dispatch, getState) => {
   const state = getState()
+
   const jwt = state.currentUser.jwt
+  const palette = state.games[gameId].palette
+  const hexCodes = guessedCode.map(el => palette[el])
 
   if (isExpired(jwt)) return dispatch(logout())
-
   request
-    .patch(`${baseUrl}/games/${gameId}`)
+    .patch(`${baseUrl}/games/${gameId}/guesses`)
     .set('Authorization', `Bearer ${jwt}`)
-    .send({ board })
-    .then(_ => dispatch(updateGameSuccess()))
+    .send({ playerGuess: hexCodes })
+    .then(result => dispatch(updateGame(result.body)))
     .catch(err => console.error(err))
 }
+

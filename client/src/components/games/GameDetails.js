@@ -1,15 +1,14 @@
-import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
-import {Redirect} from 'react-router-dom'
-import {getGames, joinGame, updateGame} from '../../actions/games'
-import {getUsers} from '../../actions/users'
-import {userId} from '../../jwt'
+import React, { PureComponent } from 'react'
+import { connect } from 'react-redux'
+import { Redirect } from 'react-router-dom'
+import { getGames, joinGame, updatePlayerGuess } from '../../actions/games'
+import { getUsers } from '../../actions/users'
+import { userId } from '../../jwt'
 import Paper from 'material-ui/Paper'
-// import Board from './Board'
 import SecretCode from './SecretCode'
 import './GameDetails.css'
 import Palette from './Palette';
-import {updateColor} from '../../actions/updateColor'
+import { updateColor } from '../../actions/updateColor'
 import GuessInput from './GuessInput';
 
 class GameDetails extends PureComponent {
@@ -27,13 +26,17 @@ class GameDetails extends PureComponent {
     this.props.updateColor(event.target.value)
   }
 
+  sendGuessHandler = (event) => {
+    const guessedCodeArr = this.props.guessedCode.map(el => parseInt(el, 10))
+    this.props.updatePlayerGuess(this.props.game.id, guessedCodeArr)
+  }
 
   render() {
-    const {game, users, authenticated, userId} = this.props
+    const { game, users, authenticated, userId } = this.props
 
     if (!authenticated) return (
-			<Redirect to="/login" />
-		)
+      <Redirect to="/login" />
+    )
 
     if (game === null || users === null) return 'Loading...'
     if (!game) return 'Not found'
@@ -51,7 +54,7 @@ class GameDetails extends PureComponent {
 
       {
         game.status === 'started' &&
-        player  === game.playerOneTurn &&
+        player === game.playerOneTurn &&
         <div>It's your turn!</div>
       }
 
@@ -59,13 +62,13 @@ class GameDetails extends PureComponent {
         game.status === 'pending' &&
         game.players.map(p => p.userId).indexOf(userId) === -1 &&
         <button onClick={this.joinGame}>Join Game</button>
-        
+
       }
-        <SecretCode />
-        <hr />
-        <GuessInput palette={game.palette}/>
-        <hr />
-        <Palette onclick={this.paletteHandler} palette={game.palette}/>
+      <SecretCode />
+      <hr />
+      <GuessInput onclick={this.sendGuessHandler} palette={game.palette} />
+      <hr />
+      <Palette onclick={this.paletteHandler} palette={game.palette} />
 
       {/* {
         winner &&
@@ -76,7 +79,7 @@ class GameDetails extends PureComponent {
 
       {
         game.status !== 'pending' //you have to complete this with smth
-        
+
       }
     </Paper>)
   }
@@ -86,11 +89,12 @@ const mapStateToProps = (state, props) => ({
   authenticated: state.currentUser !== null,
   userId: state.currentUser && userId(state.currentUser.jwt),
   game: state.games && state.games[props.match.params.id],
-  users: state.users
+  users: state.users,
+  guessedCode: state.guessedCode
 })
 
 const mapDispatchToProps = {
-  getGames, getUsers, joinGame, updateGame, updateColor
+  getGames, getUsers, joinGame, updatePlayerGuess, updateColor
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(GameDetails)

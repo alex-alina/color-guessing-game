@@ -3,7 +3,7 @@ import { Component } from 'react';
 import './Palette.css';
 
 export default class Palette extends Component {
-  
+
   render() {
     return (
       <div className="palette-main-container">
